@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon.ico">
+  <link rel="mask-icon" href="/favicon.ico" color="#222">
+  <meta http-equiv="Cache-Control" content="no-transform">
+  <meta http-equiv="Cache-Control" content="no-siteapp">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://zenxme.github.io').hostname,
+    root: '/',
+    scheme: 'Mist',
+    version: '7.7.1',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"default"},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="对MySQL数据类型INT、FLOAT、DOUBLE、YEAR、DATE等的学习和记录。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL数据类型总结">
+<meta property="og:url" content="https://zenxme.github.io/2019/03/13/MySQL%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="zenxme">
+<meta property="og:description" content="对MySQL数据类型INT、FLOAT、DOUBLE、YEAR、DATE等的学习和记录。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-03-13T02:52:50.000Z">
+<meta property="article:modified_time" content="2020-03-13T12:54:00.711Z">
+<meta property="article:author" content="zenxme">
+<meta property="article:tag" content="mysql">
+<meta property="article:tag" content="数据库">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://zenxme.github.io/2019/03/13/MySQL%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>MySQL数据类型总结 | zenxme</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="zenxme" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">zenxme</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">17</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">16</span></a>
+
+  </li>
+        <li class="menu-item menu-item-readings">
+
+    <a href="/readings/" rel="section"><i class="fa fa-fw fa-book"></i>Readings</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/zenxme" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zenxme.github.io/2019/03/13/MySQL%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/avatar.jpeg">
+      <meta itemprop="name" content="zenxme">
+      <meta itemprop="description" content="No end for learning.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zenxme">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MySQL数据类型总结
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-03-13 10:52:50" itemprop="dateCreated datePublished" datetime="2019-03-13T10:52:50+08:00">2019-03-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-03-13 20:54:00" itemprop="dateModified" datetime="2020-03-13T20:54:00+08:00">2020-03-13</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>对MySQL数据类型INT、FLOAT、DOUBLE、YEAR、DATE等的学习和记录。</p>
+<a id="more"></a>
+
+<h2 id="整数类型"><a href="#整数类型" class="headerlink" title="整数类型"></a>整数类型</h2><table>
+<thead>
+<tr>
+<th>类型</th>
+<th>占用空间</th>
+<th>有符号数值范围</th>
+<th>无符号数值范围</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>TINYINT</td>
+<td>1字节</td>
+<td>(-2^7) ~ (2^7 - 1)</td>
+<td>0 ~ (2^8 - 1)</td>
+</tr>
+<tr>
+<td>SMALLINT</td>
+<td>2字节</td>
+<td>(-2^15) ~ (2^15 - 1)</td>
+<td>0 ~ (2^16 - 1)</td>
+</tr>
+<tr>
+<td>MEDIUMINT</td>
+<td>3字节</td>
+<td>(-2^23) ~ (2^23 - 1)</td>
+<td>0 ~ (2^24 - 1)</td>
+</tr>
+<tr>
+<td>INT(INTEGER)</td>
+<td>4字节</td>
+<td>(-2^31) ~ (2^31 - 1)</td>
+<td>0 ~ (2^32 - 1)</td>
+</tr>
+<tr>
+<td>BIGINT</td>
+<td>8字节</td>
+<td>(-2^63) ~ (2^63 - 1)</td>
+<td>0 ~ (2^64 - 1)</td>
+</tr>
+</tbody></table>
+<p>创建表时，可以指定显示宽度，比如：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> test_table (id1 <span class="built_in">INT</span>(<span class="number">11</span>));</span><br></pre></td></tr></table></figure>
+
+<p>我之前误以为这个11是存储位数，但是其实这里的11只是控制交互工具显示的宽度而已。</p>
+<p>如果不指定显示宽度，那么会有一个默认的显示宽度存在，这个宽度可以保证每种数据类型可以保证可以显示该范围之内的所有值（如果是有负号数的话，包括负号的长度）。</p>
+<p>如果数值的长度大于显示宽度，那么不会影响该数值的显示。如果小于显示宽度的话，就默认在左边补空格。</p>
+<h2 id="浮点数和定点数类型"><a href="#浮点数和定点数类型" class="headerlink" title="浮点数和定点数类型"></a>浮点数和定点数类型</h2><p>浮点数：单精度浮点数(FLOAT)和双精度(DOUBLE)。</p>
+<p>定点数：DECIMAL。</p>
+<p>浮点数和定点数都可以用（M, N）来表示，其中M称为精度，表示总共的位数；N称为标度，表示小数的位数。比如DECIMAL(18, 9) 表示总共18位，取9位存储小数部分，剩下9位存储整数部分。</p>
+<p>FLOAT占用4个字节，DOUBLE占用8个字节，DECIMAL占用M+2个字节。</p>
+<p>FLOAT和DOUBLE在不指定精度时，默认会由计算机硬件和操作系统决定。DECIMAL如不指定，默认为(10, 0)。</p>
+<p>CPU原生支持浮点数运算，但是不支持定点数运算，因为在MySQL里，定点数以字符串形式存储。</p>
+<p>在对精度要求比较高的时候（如货币、科学数据等），使用DECIMAL类型比较好。</p>
+<h2 id="日期和时间类型"><a href="#日期和时间类型" class="headerlink" title="日期和时间类型"></a>日期和时间类型</h2><table>
+<thead>
+<tr>
+<th>类型</th>
+<th>占用空间</th>
+<th>日期格式</th>
+<th>日期范围</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>YEAR</td>
+<td>1字节</td>
+<td>YYYY</td>
+<td>1901 ~ 2155</td>
+</tr>
+<tr>
+<td>TIME</td>
+<td>3字节</td>
+<td>HH:MM:SS</td>
+<td>-838:59:59 ~ 838:59:59</td>
+</tr>
+<tr>
+<td>DATE</td>
+<td>3字节</td>
+<td>YYYY-MM-DD</td>
+<td>1000-01-01 ~ 9999-12-3</td>
+</tr>
+<tr>
+<td>DATETIME</td>
+<td>8字节</td>
+<td>YYYY-MM-DD HH:MM:SS</td>
+<td>1000-01-01 00:00:00 ~ 9999-12-31 23:59:59</td>
+</tr>
+<tr>
+<td>TIMESTAMP</td>
+<td>4字节</td>
+<td>YYYY-MM-DD HH:MM:SS</td>
+<td>1970-01-01 00:00:00 UTC ~ 2038-01-19 03:14:07 UTC</td>
+</tr>
+</tbody></table>
+<p>MySQL 允许不严格语法：任何标点符号都可以用作日期部分或时间部分之间的间隔符。</p>
+<p>TIMESTAMP存储和查询时，都会根据当前的时区进行转换。</p>
+<h2 id="文本字符串类型"><a href="#文本字符串类型" class="headerlink" title="文本字符串类型"></a>文本字符串类型</h2><table>
+<thead>
+<tr>
+<th>类型名称</th>
+<th>占用空间</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CHAR(M)</td>
+<td>M字节，1&lt;=M&lt;=255</td>
+<td>固定长度的字符串</td>
+</tr>
+<tr>
+<td>VARCHAR(M)</td>
+<td>L+1字节，L&lt;=M且1&lt;=M&lt;=65535</td>
+<td>变长字符串</td>
+</tr>
+<tr>
+<td>TINYTEXT</td>
+<td>L+1字节，L&lt;2^8</td>
+<td></td>
+</tr>
+<tr>
+<td>TEXT</td>
+<td>L+2字节，L&lt;2^16</td>
+<td></td>
+</tr>
+<tr>
+<td>MEDIUMTEXT</td>
+<td>L+3字节，L&lt;2^24</td>
+<td></td>
+</tr>
+<tr>
+<td>LONGTEXT</td>
+<td>L+4字节，L&lt;2^32</td>
+<td></td>
+</tr>
+<tr>
+<td>ENUM</td>
+<td>1或2个字节，取决于枚举值的数目(最大值65535)</td>
+<td>枚举类型</td>
+</tr>
+<tr>
+<td>SET</td>
+<td>1、2、3、4或8个字节，取决于集合成员的数量</td>
+<td>集合</td>
+</tr>
+</tbody></table>
+<p>VARCHAR和TEXT是变长类型，其实际存储需求取决于列值的实际长度。比如一列是VARCHAR(10)，存储了”abcd”的时候，L为4，占用的空间为5个字节，多出来的一个字节用来记录字符串的长度。</p>
+<p>CHAR是固定长度的类型，在定义时指定长度。</p>
+<p>VARCHAR的实际长度由最长的行的大小和使用的字符集确定。</p>
+<p>CHAR在保存时，如果长度不够就在右侧填充空格；在检索时尾部的空格将被删除。而VARCHAR在保存和检索时尾部的空格仍然保留。</p>
+<p>ENUM和SET以字符串形式出现，但是在MySQL内部以数值的形式存储。</p>
+<h2 id="二进制字符串类型"><a href="#二进制字符串类型" class="headerlink" title="二进制字符串类型"></a>二进制字符串类型</h2><table>
+<thead>
+<tr>
+<th>类型名称</th>
+<th>占用空间</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>BIT(M)</td>
+<td>大约(M+7)/8个字节</td>
+<td>位字段类型</td>
+</tr>
+<tr>
+<td>BINARY(M)</td>
+<td>M个字节</td>
+<td>固定长度二进制字符串</td>
+</tr>
+<tr>
+<td>VARBINARY(M)</td>
+<td>M+1个字节</td>
+<td>可变长度二进制字符串</td>
+</tr>
+<tr>
+<td>TINYBLOB(M)</td>
+<td>L+1字节，L&lt;2^8</td>
+<td></td>
+</tr>
+<tr>
+<td>BLOB(M)</td>
+<td>L+2字节，L&lt;2^16</td>
+<td></td>
+</tr>
+<tr>
+<td>MEDIUMBLOB(M)</td>
+<td>L+3字节，L&lt;2^24</td>
+<td></td>
+</tr>
+<tr>
+<td>LONGBLOB(M)</td>
+<td>L+4字节，L&lt;2^32</td>
+<td></td>
+</tr>
+</tbody></table>
+<h2 id="如何选择存储类型"><a href="#如何选择存储类型" class="headerlink" title="如何选择存储类型"></a>如何选择存储类型</h2><p>为了优化存储，提高数据库的性能，在任何情况下均应使用最精确的类型。即在所有可以表示该列的类型中，该类型使用的存储最少。可以简略总结如下：</p>
+<ul>
+<li>如果不需要小数部分，则选择整数类型；如果需要小数部分，则选择浮点数类型。如果精确度要求不高，则选择FLOAT类型；如果精确度要求高，则选择DOUBLE类型。如果要更高的精确度要求，以及要进行数值比较的话，可以选择DECIMAL类型。</li>
+<li>如果只需要记录年份，则选择YEAR类型；只记录日期，则选择DATE类型；只记录时间，则选择TIME类型；如果同时记录日期和时间，如果范围小的选择TIMESTAMP，大的选择DATETIME。</li>
+<li>对于MyISAM存储引擎，最好使用固定长度的数据列代替可变长度的数据列，这样可以使整个表静态化，从而使数据检索更快，用空间换时间。</li>
+<li>对于InnoDB存储引擎，使用可变长度的数据列，因为InnoDB数据表的存储格式不分固定长度和可变长度，因此使用CHAR不一定比VARCHAR更好，但是由于VARCHAR是按照实际的长度存储，比较节省空间，所以对磁盘I/O和数据存储比较好。</li>
+<li>ENUM类型的例子：性别字段，只能取<code>男</code>或者<code>女</code>。</li>
+<li>SET类型的例子：存储某人的兴趣爱好。</li>
+<li>二进制字符串用来存储图片、音频等二进制数据，文本字符串用来存储文本数据。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/mysql/" rel="tag"><i class="fa fa-tag"></i> mysql</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"><i class="fa fa-tag"></i> 数据库</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/03/12/MySQL%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="prev" title="MySQL存储引擎总结">
+      <i class="fa fa-chevron-left"></i> MySQL存储引擎总结
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/03/15/selenium%E7%88%AC%E8%99%AB%E6%80%BB%E7%BB%93/" rel="next" title="selenium爬虫总结">
+      selenium爬虫总结 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#整数类型"><span class="nav-number">1.</span> <span class="nav-text">整数类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#浮点数和定点数类型"><span class="nav-number">2.</span> <span class="nav-text">浮点数和定点数类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#日期和时间类型"><span class="nav-number">3.</span> <span class="nav-text">日期和时间类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#文本字符串类型"><span class="nav-number">4.</span> <span class="nav-text">文本字符串类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二进制字符串类型"><span class="nav-number">5.</span> <span class="nav-text">二进制字符串类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#如何选择存储类型"><span class="nav-number">6.</span> <span class="nav-text">如何选择存储类型</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="zenxme"
+      src="/avatar.jpeg">
+  <p class="site-author-name" itemprop="name">zenxme</p>
+  <div class="site-description" itemprop="description">No end for learning.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">16</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/zenxme" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;zenxme" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:894843475@qq.com" title="E-Mail → mailto:894843475@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zenxme</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> v7.7.1
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

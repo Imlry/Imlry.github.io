@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon.ico">
+  <link rel="mask-icon" href="/favicon.ico" color="#222">
+  <meta http-equiv="Cache-Control" content="no-transform">
+  <meta http-equiv="Cache-Control" content="no-siteapp">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://zenxme.github.io').hostname,
+    root: '/',
+    scheme: 'Mist',
+    version: '7.7.1',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"default"},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="Python3.2之后，标准库里引入了concurrent.futures模块，为异步调用提供了高级的接口。在此记录下我对其中的ThreadPoolExecutor和ProcessPoolExecutor类的学习和理解。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python线程池和进程池">
+<meta property="og:url" content="https://zenxme.github.io/2019/04/11/Python%E7%BA%BF%E7%A8%8B%E6%B1%A0%E5%92%8C%E8%BF%9B%E7%A8%8B%E6%B1%A0/index.html">
+<meta property="og:site_name" content="zenxme">
+<meta property="og:description" content="Python3.2之后，标准库里引入了concurrent.futures模块，为异步调用提供了高级的接口。在此记录下我对其中的ThreadPoolExecutor和ProcessPoolExecutor类的学习和理解。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-04-11T08:15:36.000Z">
+<meta property="article:modified_time" content="2020-03-11T06:43:10.352Z">
+<meta property="article:author" content="zenxme">
+<meta property="article:tag" content="python">
+<meta property="article:tag" content="线程">
+<meta property="article:tag" content="进程">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://zenxme.github.io/2019/04/11/Python%E7%BA%BF%E7%A8%8B%E6%B1%A0%E5%92%8C%E8%BF%9B%E7%A8%8B%E6%B1%A0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Python线程池和进程池 | zenxme</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="zenxme" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">zenxme</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">17</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">16</span></a>
+
+  </li>
+        <li class="menu-item menu-item-readings">
+
+    <a href="/readings/" rel="section"><i class="fa fa-fw fa-book"></i>Readings</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/zenxme" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zenxme.github.io/2019/04/11/Python%E7%BA%BF%E7%A8%8B%E6%B1%A0%E5%92%8C%E8%BF%9B%E7%A8%8B%E6%B1%A0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/avatar.jpeg">
+      <meta itemprop="name" content="zenxme">
+      <meta itemprop="description" content="No end for learning.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zenxme">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Python线程池和进程池
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-04-11 16:15:36" itemprop="dateCreated datePublished" datetime="2019-04-11T16:15:36+08:00">2019-04-11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-03-11 14:43:10" itemprop="dateModified" datetime="2020-03-11T14:43:10+08:00">2020-03-11</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Python3.2之后，标准库里引入了<code>concurrent.futures</code>模块，为异步调用提供了高级的接口。在此记录下我对其中的<code>ThreadPoolExecutor</code>和<code>ProcessPoolExecutor</code>类的学习和理解。</p>
+<a id="more"></a>
+
+<h2 id="ThreadPoolExecutor"><a href="#ThreadPoolExecutor" class="headerlink" title="ThreadPoolExecutor"></a>ThreadPoolExecutor</h2><p><code>ThreadPoolExecutor</code>是<code>Executor</code>类的子类。它有一个参数是<code>max_workers</code>，指定了线程池中最多同时执行的线程数量。这个是最常用的参数，3.5版本之后又增加了几个参数，但是不常用，可以去文档里查看。</p>
+<h3 id="1个线程"><a href="#1个线程" class="headerlink" title="1个线程"></a>1个线程</h3><p>开启1个线程访问<code>https://www.baidu.com/</code></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> concurrent.futures <span class="keyword">import</span> ThreadPoolExecutor</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> requests</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_headers</span><span class="params">(url)</span>:</span></span><br><span class="line">    <span class="keyword">return</span> (url, requests.get(url).headers)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> ThreadPoolExecutor(<span class="number">1</span>) <span class="keyword">as</span> executor:</span><br><span class="line">    f = executor.submit(get_headers, <span class="string">'https://www.baidu.com/'</span>)</span><br><span class="line">    print(f.result())</span><br></pre></td></tr></table></figure>
+
+<h3 id="3个线程"><a href="#3个线程" class="headerlink" title="3个线程"></a>3个线程</h3><p>开启3个线程分别访问<code>https://www.baidu.com/</code>、<code>https://www.163.com/</code>、<code>https://www.qq.com/</code></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> concurrent.futures <span class="keyword">import</span> ThreadPoolExecutor, as_completed</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> requests</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_headers</span><span class="params">(url)</span>:</span></span><br><span class="line">    <span class="keyword">return</span> (url, requests.get(url).headers)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> ThreadPoolExecutor(<span class="number">3</span>) <span class="keyword">as</span> executor:</span><br><span class="line">    fs = [</span><br><span class="line">        executor.submit(get_headers, <span class="string">'https://www.baidu.com/'</span>),</span><br><span class="line">        executor.submit(get_headers, <span class="string">'https://www.163.com/'</span>),</span><br><span class="line">        executor.submit(get_headers, <span class="string">'https://www.qq.com/'</span>),</span><br><span class="line">    ]</span><br><span class="line">    <span class="keyword">for</span> f <span class="keyword">in</span> as_completed(fs):</span><br><span class="line">        print(f.result())</span><br></pre></td></tr></table></figure>
+
+<p>也可以使用<code>map</code>函数</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> concurrent.futures <span class="keyword">import</span> ThreadPoolExecutor</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> requests</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_headers</span><span class="params">(url)</span>:</span></span><br><span class="line">    <span class="keyword">return</span> (url, requests.get(url).headers)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> ThreadPoolExecutor(<span class="number">3</span>) <span class="keyword">as</span> executor:</span><br><span class="line">    urls = [</span><br><span class="line">        <span class="string">'https://www.baidu.com/'</span>,</span><br><span class="line">        <span class="string">'https://www.163.com/'</span>,</span><br><span class="line">        <span class="string">'https://www.qq.com/'</span>,</span><br><span class="line">    ]</span><br><span class="line">    <span class="keyword">for</span> result <span class="keyword">in</span> executor.map(get_headers, urls):</span><br><span class="line">        print(result)</span><br></pre></td></tr></table></figure>
+
+<p>需要注意的是，使用<code>map</code>函数时，返回的结果的顺序和Python内置的map函数一样，是按照传递进去的顺序来的，并不是真正的它们完成的顺序。比如在上面的代码里，第一个返回的永远是baidu的请求。通过查看源码也印证了这一问题。</p>
+<p><code>Executor.map</code>的源码</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">map</span><span class="params">(self, fn, *iterables, timeout=None, chunksize=<span class="number">1</span>)</span>:</span></span><br><span class="line">    <span class="keyword">if</span> timeout <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">        end_time = timeout + time.monotonic()</span><br><span class="line"></span><br><span class="line">    fs = [self.submit(fn, *args) <span class="keyword">for</span> args <span class="keyword">in</span> zip(*iterables)]</span><br><span class="line"></span><br><span class="line">    <span class="comment"># Yield must be hidden in closure so that the futures are submitted</span></span><br><span class="line">    <span class="comment"># before the first iterator value is required.</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">result_iterator</span><span class="params">()</span>:</span></span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            <span class="comment"># reverse to keep finishing order</span></span><br><span class="line">            fs.reverse()</span><br><span class="line">            <span class="keyword">while</span> fs:</span><br><span class="line">                <span class="comment"># Careful not to keep a reference to the popped future</span></span><br><span class="line">                <span class="keyword">if</span> timeout <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">                    <span class="keyword">yield</span> fs.pop().result()</span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    <span class="keyword">yield</span> fs.pop().result(end_time - time.monotonic())</span><br><span class="line">        <span class="keyword">finally</span>:</span><br><span class="line">            <span class="keyword">for</span> future <span class="keyword">in</span> fs:</span><br><span class="line">                future.cancel()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> result_iterator()</span><br></pre></td></tr></table></figure>
+
+<p>先调用<code>fs.reverse</code>转置列表，然后不断调用pop取最后一个的result。</p>
+<h3 id="死锁"><a href="#死锁" class="headerlink" title="死锁"></a>死锁</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">from</span> concurrent.futures <span class="keyword">import</span> ThreadPoolExecutor</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">a_work</span><span class="params">()</span>:</span></span><br><span class="line">    time.sleep(<span class="number">5</span>)</span><br><span class="line">    print(b.result())</span><br><span class="line">    <span class="keyword">return</span> <span class="string">'a'</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">b_work</span><span class="params">()</span>:</span></span><br><span class="line">    time.sleep(<span class="number">5</span>)</span><br><span class="line">    print(a.result())</span><br><span class="line">    <span class="keyword">return</span> <span class="string">'b'</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> ThreadPoolExecutor(<span class="number">2</span>) <span class="keyword">as</span> executor:</span><br><span class="line">    a = executor.submit(a_work)</span><br><span class="line">    b = executor.submit(b_work)</span><br></pre></td></tr></table></figure>
+
+<p>这个程序永远都不会运行结束，因为线程a在等待b的结果，b在等待a的结果。其中的<code>time.sleep(5)</code>非常关键，它可以保证这两个线程都开始运行了。</p>
+<p>去掉它之后，可以发现程序居然可以运行结束了，但是却没有任何的输出。这其实就是第二个常见错误，只有调用在<code>future</code>对象上调用<code>result()</code>函数之后，异常才可以被捕获。</p>
+<h3 id="异常"><a href="#异常" class="headerlink" title="异常"></a>异常</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> concurrent.futures <span class="keyword">import</span> ThreadPoolExecutor</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">a_work</span><span class="params">()</span>:</span></span><br><span class="line">    print(after_b)</span><br><span class="line">    print(b.result())</span><br><span class="line">    <span class="keyword">return</span> <span class="string">'a'</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">b_work</span><span class="params">()</span>:</span></span><br><span class="line">    print(a.result())</span><br><span class="line">    <span class="keyword">return</span> <span class="string">'b'</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">after_b = <span class="literal">False</span></span><br><span class="line"><span class="keyword">with</span> ThreadPoolExecutor(<span class="number">2</span>) <span class="keyword">as</span> executor:</span><br><span class="line">    a = executor.submit(a_work)</span><br><span class="line">    b = executor.submit(b_work)</span><br><span class="line">    after_b = <span class="literal">True</span></span><br><span class="line">    print(a.result(), b.result())</span><br></pre></td></tr></table></figure>
+
+<p>运行上面的代码，可以发现程序输出了一个<code>False</code>，和一个异常：<code>NameError: name &#39;b&#39; is not defined</code>，这是因为a线程已经开始运行了，但是b还没有开始，即，submit函数还没有返回，那么这个时候after_b的值仍然是False，而且变量b还是未定义的。</p>
+<p>我们之前的代码，之所以没有出现异常，就是因为没有调用result函数。下面的代码可以更直观的说明问题。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> concurrent.futures <span class="keyword">import</span> ThreadPoolExecutor</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">raise_exception</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="keyword">raise</span> ValueError(<span class="string">'123'</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> ThreadPoolExecutor(<span class="number">1</span>) <span class="keyword">as</span> executor:</span><br><span class="line">    a = executor.submit(raise_exception)</span><br><span class="line">    <span class="comment"># a.result()</span></span><br></pre></td></tr></table></figure>
+
+<p>运行这段代码，不会有任何输出。把<code>a.result()</code>这一行的注释取消，就可以看到异常：<code>ValueError: 123</code>。</p>
+<h2 id="ProcessPoolExecutor"><a href="#ProcessPoolExecutor" class="headerlink" title="ProcessPoolExecutor"></a>ProcessPoolExecutor</h2><p>和<code>ThreadPoolExecutor</code>的用法基本上类似，不同之处在于，只有可以被pickle库序列化的对象才可以被执行和返回。因为需要在不同的进程之间传递消息。这个类使用了multiprocessing库。</p>
+<h2 id="为什么要使用进程池和线程池？"><a href="#为什么要使用进程池和线程池？" class="headerlink" title="为什么要使用进程池和线程池？"></a>为什么要使用进程池和线程池？</h2><p>在我的理解看来，线程和进程的创建是需要开销的，而之前创建的线程或进程在执行完了任务之后，可以先不销毁，继续用来执行以后的任务。还有一个优势就是方便对这些创建的进程和线程进行统一的管理。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>官方文档：<a href="https://docs.python.org/3/library/concurrent.futures.html" target="_blank" rel="noopener">https://docs.python.org/3/library/concurrent.futures.html</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/python/" rel="tag"><i class="fa fa-tag"></i> python</a>
+              <a href="/tags/%E7%BA%BF%E7%A8%8B/" rel="tag"><i class="fa fa-tag"></i> 线程</a>
+              <a href="/tags/%E8%BF%9B%E7%A8%8B/" rel="tag"><i class="fa fa-tag"></i> 进程</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/04/09/dgraph%E6%95%B0%E6%8D%AE%E5%BA%93%E7%AE%80%E5%8D%95%E6%80%BB%E7%BB%93/" rel="prev" title="dgraph数据库简单总结">
+      <i class="fa fa-chevron-left"></i> dgraph数据库简单总结
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/04/28/scrapy%E4%B8%AD%E7%9A%84%E6%95%B0%E6%8D%AE%E6%B5%81/" rel="next" title="scrapy中的数据流">
+      scrapy中的数据流 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#ThreadPoolExecutor"><span class="nav-number">1.</span> <span class="nav-text">ThreadPoolExecutor</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1个线程"><span class="nav-number">1.1.</span> <span class="nav-text">1个线程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3个线程"><span class="nav-number">1.2.</span> <span class="nav-text">3个线程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#死锁"><span class="nav-number">1.3.</span> <span class="nav-text">死锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#异常"><span class="nav-number">1.4.</span> <span class="nav-text">异常</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ProcessPoolExecutor"><span class="nav-number">2.</span> <span class="nav-text">ProcessPoolExecutor</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#为什么要使用进程池和线程池？"><span class="nav-number">3.</span> <span class="nav-text">为什么要使用进程池和线程池？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">4.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="zenxme"
+      src="/avatar.jpeg">
+  <p class="site-author-name" itemprop="name">zenxme</p>
+  <div class="site-description" itemprop="description">No end for learning.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">16</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/zenxme" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;zenxme" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:894843475@qq.com" title="E-Mail → mailto:894843475@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zenxme</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> v7.7.1
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
