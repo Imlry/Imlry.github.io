@@ -309,9 +309,9 @@
     
       <category term="python" scheme="https://zenxme.github.io/tags/python/"/>
     
-      <category term="爬虫" scheme="https://zenxme.github.io/tags/%E7%88%AC%E8%99%AB/"/>
-    
       <category term="selenium" scheme="https://zenxme.github.io/tags/selenium/"/>
+    
+      <category term="爬虫" scheme="https://zenxme.github.io/tags/%E7%88%AC%E8%99%AB/"/>
     
   </entry>
   
