@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://zenxme.github.io/"/>
-  <updated>2020-03-13T13:23:15.157Z</updated>
+  <updated>2020-03-16T08:32:15.469Z</updated>
   <id>https://zenxme.github.io/</id>
   
   <author>
@@ -21,9 +21,9 @@
     <link href="https://zenxme.github.io/2020/03/13/oh-my-zsh-prompt%E4%BF%AE%E6%94%B9/"/>
     <id>https://zenxme.github.io/2020/03/13/oh-my-zsh-prompt%E4%BF%AE%E6%94%B9/</id>
     <published>2020-03-13T13:10:13.000Z</published>
-    <updated>2020-03-13T13:23:15.157Z</updated>
+    <updated>2020-03-16T08:32:15.469Z</updated>
     
-    <content type="html"><![CDATA[<p>对oh my zsh prompt样式的修改方法。</p><a id="more"></a><p>oh my zsh的主题默认在<code>~/.oh-my-zsh/themes/</code>下面，如果对某个主题的样式不满意的话可以对该主题文件进行编辑。</p><p>比如我用的这个robbyrussell主题，它默认只显示当前文件夹名，而不是整个路径，这有时候会让人分不清所在的具体路径，于是可以进行如下的命令：</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">subl ~/.oh-my-zsh/themes/robbyrussell.zsh-theme</span><br></pre></td></tr></table></figure><p>其中，subl即sublime text的启动程序。</p><p>打开之后只需对其中的<code>PROMPT</code>变量进行修改即可。</p><p>可以看到原来<code>%{$fg[cyan]%}%c%{$reset_color%}</code>中的<code>%c</code>，它是当前文件夹名的意思，这里可以修改为<code>[$PWD]</code>，表示完整路径。这部分文本最终变成了<code>{$fg[cyan]%}[$PWD]%{$reset_color%}</code>。</p><p>接着我测试之后发现，如果某个完整太长的话会占据整个termianl的一行，新输入的命令往往有一部分要拐到下一行，很不方便观看。</p><p>于是我在搜索之后发现可以用<code>$&#39;\n&#39;</code>引用换行符来添加到<code>PROMPT</code>的末尾，最终修改结果如下：</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">NEWLINE=$<span class="string">'\n'</span></span><br><span class="line">PRE_PROMPT=<span class="string">"%(?:%&#123;<span class="variable">$fg_bold</span>[green]%&#125;➜ :%&#123;<span class="variable">$fg_bold</span>[red]%&#125;➜ )"</span></span><br><span class="line">PROMPT=<span class="variable">$PRE_PROMPT</span></span><br><span class="line">PROMPT+=<span class="string">'%&#123;$fg[cyan]%&#125;[$PWD]%&#123;$reset_color%&#125; $(git_prompt_info)'</span></span><br><span class="line">PROMPT+=<span class="string">'$&#123;NEWLINE&#125;'</span></span><br><span class="line">PROMPT+=<span class="variable">$PRE_PROMPT</span></span><br></pre></td></tr></table></figure><p><img src="/2020/03/13/oh-my-zsh-prompt%E4%BF%AE%E6%94%B9/1.png" alt></p>]]></content>
+    <content type="html"><![CDATA[<p>对oh my zsh prompt样式的修改方法。</p><a id="more"></a><p>oh my zsh的主题默认在<code>~/.oh-my-zsh/themes/</code>下面，如果对某个主题的样式不满意的话可以对该主题文件进行编辑。</p><p>比如我用的这个robbyrussell主题，它默认只显示当前文件夹名，而不是整个路径，这有时候会让人分不清所在的具体路径，于是可以进行如下的命令：</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">subl ~/.oh-my-zsh/themes/robbyrussell.zsh-theme</span><br></pre></td></tr></table></figure><p>其中，subl即sublime text的启动程序。</p><p>打开之后只需对其中的<code>PROMPT</code>变量进行修改即可。</p><p>可以看到原来<code>%{$fg[cyan]%}%c%{$reset_color%}</code>中的<code>%c</code>，它是当前文件夹名的意思，这里可以修改为<code>[$PWD]</code>，表示完整路径。这部分文本最终变成了<code>{$fg[cyan]%}[$PWD]%{$reset_color%}</code>。</p><p>接着我测试之后发现，如果某个完整太长的话会占据整个terminal的一行，新输入的命令往往有一部分要拐到下一行，很不方便观看。</p><p>于是我在搜索之后发现可以用<code>$&#39;\n&#39;</code>引用换行符来添加到<code>PROMPT</code>的末尾，最终修改结果如下：</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">NEWLINE=$<span class="string">'\n'</span></span><br><span class="line">PRE_PROMPT=<span class="string">"%(?:%&#123;<span class="variable">$fg_bold</span>[green]%&#125;➜ :%&#123;<span class="variable">$fg_bold</span>[red]%&#125;➜ )"</span></span><br><span class="line">PROMPT=<span class="variable">$PRE_PROMPT</span></span><br><span class="line">PROMPT+=<span class="string">'%&#123;$fg[cyan]%&#125;[$PWD]%&#123;$reset_color%&#125; $(git_prompt_info)'</span></span><br><span class="line">PROMPT+=<span class="string">'$&#123;NEWLINE&#125;'</span></span><br><span class="line">PROMPT+=<span class="variable">$PRE_PROMPT</span></span><br></pre></td></tr></table></figure><p><img src="/2020/03/13/oh-my-zsh-prompt%E4%BF%AE%E6%94%B9/1.png" alt></p>]]></content>
     
     <summary type="html">
     
@@ -309,9 +309,9 @@
     
       <category term="python" scheme="https://zenxme.github.io/tags/python/"/>
     
-      <category term="selenium" scheme="https://zenxme.github.io/tags/selenium/"/>
-    
       <category term="爬虫" scheme="https://zenxme.github.io/tags/%E7%88%AC%E8%99%AB/"/>
+    
+      <category term="selenium" scheme="https://zenxme.github.io/tags/selenium/"/>
     
   </entry>
   
